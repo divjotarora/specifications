@@ -61,9 +61,6 @@ An error is considered resumable if it meets any of the following criteria:
     * - CursorKilled
       - 237
 
-- a server error response with an error message containing the substring "not
-  master" or "node is recovering"
-
 An error on an aggregate command is not a resumable error. Only errors on a
 getMore command may be considered resumable errors.
 
@@ -600,4 +597,6 @@ Changelog
 | 2018-05-24 | Changed ``startatClusterTime`` to ``startAtOperationTime`` |
 +------------+------------------------------------------------------------+
 | 2018-06-14 | Clarified how to calculate ``startAtOperationTime``        |
++------------+------------------------------------------------------------+
+| 2018-06-25 | Remove redundant error message checks for resumable errors |
 +------------+------------------------------------------------------------+
