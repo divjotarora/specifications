@@ -160,6 +160,11 @@
       "required": ["client", "events"],
       "properties": {
         "client": { "type": "string" },
+        "ignoreCommandMonitoringEvents": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
         "events": {
           "type": "array",
           "items": { "$ref": "#/definitions/expectedEvent" }
@@ -206,7 +211,8 @@
       "properties": {
         "readConcern": { "type": "object" },
         "readPreference": { "type": "object" },
-        "writeConcern": { "type": "object" }
+        "writeConcern": { "type": "object" },
+        "timeoutMS": { "type": "number" }
       }
     },
 
@@ -251,7 +257,11 @@
           "minItems": 1,
           "items": { "type": "string" }
         },
-        "expectResult": {}
+        "expectResult": {},
+        "isTimeoutError": {
+          "type": "boolean",
+          "const": true
+        }
       }
     },
 
