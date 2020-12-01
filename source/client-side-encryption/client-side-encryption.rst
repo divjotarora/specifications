@@ -10,8 +10,8 @@ Client Side Encryption
 :Status: Accepted
 :Type: Standards
 :Minimum Server Version: 4.2
-:Last Modified: October 19, 2020
-:Version: 1.2.0
+:Last Modified: December 1, 2020
+:Version: 1.3.0
 
 .. contents::
 
@@ -635,6 +635,10 @@ All errors from the MongoClient interacting with the key vault
 collection MUST be distinguished in some way (e.g. exception type) to
 make it easier for users to distinguish when a command fails due to
 behind-the-scenes operations required for encryption or decryption.
+
+Drivers MUST apply timeouts to operations executed as part of client-side encryption per `Client Side Operations
+Timeout: Client Side Encryption
+<../client-side-operations-timeout/client-side-operations-timeout.rst#client-side-encryption>`__.
 
 Integrating with libmongocrypt
 ==============================
@@ -1397,7 +1401,12 @@ Changelog
 =========
 
 +------------+------------------------------------------------------------+
+| 2020-12-01 | Require that timeouts be applied per the client-side       |
+|            | operations timeout specification                           |
++------------+------------------------------------------------------------+
 | 2020-10-19 | Add 'azure' and 'gcp' KMS providers                        |
++------------+------------------------------------------------------------+
 | 2019-10-11 | Add 'endpoint' to AWS masterkey                            |
++------------+------------------------------------------------------------+
 | 2019-12-17 | Clarified bypassAutoEncryption and managing mongocryptd    |
 +------------+------------------------------------------------------------+

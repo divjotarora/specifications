@@ -366,6 +366,9 @@ Fields:
 * (=) topologyVersion: A topologyVersion or null. Default null.
   The "topologyVersion" from the server's most recent ismaster response or
   `State Change Error`_.
+* (=) iscryptd: boolean indicating if the server is a
+  `mongocryptd <../client-side-encryption/client-side-encryption.rst#mongocryptd>`_
+  server. Default null.
 
 "Passives" are priority-zero replica set members that cannot become primary.
 The client treats them precisely the same as other members.
@@ -2351,6 +2354,8 @@ stale application errors.
 2020-05-07: Include error field in ServerDescription equality comparison.
 
 2020-06-08: Clarify reasoning behind how SDAM determines if a topologyVersion is stale.
+
+2020-12-01: Require that drivers track iscryptd field from isMaster responses.
 
 .. Section for links.
 

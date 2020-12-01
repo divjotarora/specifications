@@ -160,6 +160,8 @@ This section is an overview of the public API for transactions:
         /**
          * The maximum amount of time to allow a single commitTransaction
          * command to run.
+         *
+         * NOTE: This option is deprecated in favor of timeoutMS.
          */
         Optional<Int64> maxCommitTimeMS;
     }
@@ -304,6 +306,9 @@ preference on a transaction.
 
 maxCommitTimeMS
 ^^^^^^^^^^^^^^^
+
+NOTE: This option is deprecated in favor of `timeoutMS
+<../client-side-operations-timeout/client-side-operations-timeout.rst#timeoutMS>`_.
 
 The maximum amount of time to allow a single commitTransaction command to run.
 
@@ -1397,6 +1402,7 @@ durable, which achieves the primary objective of avoiding duplicate commits.
 **Changelog**
 -------------
 
+:2020-12-01: Deprecate maxCommitTimeMS in favor of timeoutMS.
 :2019-10-21: Specify that a commit error can have two error labels
 :2019-07-30: Clarify when the cached recoveryToken should be cleared.
 :2019-06-10: Client-side errors must not change transaction state.

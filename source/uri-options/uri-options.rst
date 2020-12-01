@@ -256,13 +256,22 @@ pertaining to URI options apply here.
      - non-negative integer; 0 means no timeout
      - no timeout
      - no
-     - Amount of time spent attempting to send or receive on a socket before timing out; note that this only applies to application operations, not SDAM
+     - NOTE: This option is deprecated  in favor of `timeoutMS <../client-side-operations-timeout/client-side-operations-timeout.rst#timeoutMS>`_
+
+       Amount of time spent attempting to send or receive on a socket before timing out; note that this only applies to application operations, not SDAM.
 
    * - ssl
      - "true" or "false"
      - same as "tls"
      - no
      - alias of "tls"; required to ensure that Atlas connection strings continue to work
+
+   *
+     - timeoutMS
+     - non-negative integer; 0 or unset means no timeout
+     - Defined in `Client Side Operations Timeout: timeoutMS <../client-side-operations-timeout/client-side-operations-timeout.rst#timeoutMS>`_.
+     - no
+     - Time limit for the full execution of an operation
 
    * - tls
      - "true" or "false"
@@ -339,13 +348,17 @@ pertaining to URI options apply here.
      - positive number
      - defined in the `Connection Pooling spec`_
      - required for drivers with connection pools, with exceptions described in the `Connection Pooling spec`_
-     - The maximum number of clients or connections able to be created by a pool at a given time
+     - NOTE: This option is deprecated  in favor of `timeoutMS <../client-side-operations-timeout/client-side-operations-timeout.rst#timeoutMS>`_
+
+       The maximum number of clients or connections able to be created by a pool at a given time.
 
    * - wTimeoutMS
      - non-negative 64-bit integer; 0 means no timeout
      - no timeout
      - no
-     - Default write concern "wtimeout" field for the client
+     - NOTE: This option is deprecated  in favor of `timeoutMS <../client-side-operations-timeout/client-side-operations-timeout.rst#timeoutMS>`_
+
+       Default write concern "wtimeout" field for the client
 
    * - zlibCompressionLevel
      - integer between -1 and 9 (inclusive)
@@ -443,6 +456,7 @@ this specification MUST be updated to reflect those changes.
 Changes
 -------
 
+- 2020-12-01 Add the timeoutMS option and deprecate some existing timeout options
 - 2020-03-03 Add tlsDisableCertificateRevocationCheck option
 - 2020-02-26 Add tlsDisableOCSPEndpointCheck option
 - 2019-01-25 Updated to reflect new Connection Monitoring and Pooling Spec

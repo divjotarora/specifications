@@ -3,14 +3,14 @@ Retryable Writes
 ================
 
 :Spec Title: Retryable Writes
-:Spec Version: 1.5.3
+:Spec Version: 1.6.0
 :Author: Jeremy Mikola
 :Lead: \A. Jesse Jiryu Davis
 :Advisors: Robert Stam, Esha Maharishi, Samantha Ritter, and Kaloian Manassiev
 :Status: Accepted
 :Type: Standards
 :Minimum Server Version: 3.6
-:Last Modified: 2020-09-01
+:Last Modified: 2020-12-01
 
 .. contents::
 
@@ -374,29 +374,25 @@ writes, drivers MUST add a transaction ID to the command. Drivers MUST only
 attempt to retry a write command if the first attempt yields a retryable error.
 Drivers MUST NOT attempt to retry a write command on any other error.
 
-If the first attempt of a write command including a transaction ID encounters a
-retryable error, the driver MUST update its topology according to the SDAM spec
-(see: `Error Handling`_) and capture this original retryable error. Drivers
-should then proceed with selecting a writable server for the retry attempt.
+If the first attempt of a write command including a transaction ID encounters
+a retryable error, the driver MUST update its topology according to the SDAM
+spec (see: `Error Handling`_) and capture this original retryable error.
+Drivers MUST then proceed with retrying per `Client Side Operations Timeout:
+Retryability
+<../client-side-operations-timeout/client-side-operations-timeout.rst#retryability>`__.
+For each retry attempt, drivers MUST select a writable server.
 
 .. _Error Handling: ../server-discovery-and-monitoring/server-discovery-and-monitoring.rst#error-handling
 
-If the driver cannot select a server for the retry attempt or the selected
-server does not support retryable writes, retrying is not possible and drivers
-MUST raise the original retryable error. In both cases, the caller is able to
-infer that an attempt was made.
+If the driver cannot select a server for a retry attempt or the selected
+server does not support retryable writes, retrying is not possible and
+drivers MUST raise the retryable error from the previous attempt. In both
+cases, the caller is able to infer that an attempt was made.
 
-If the retry attempt also fails, drivers MUST update their topology according to
+If a retry attempt also fails, drivers MUST update their topology according to
 the SDAM spec (see: `Error Handling`_). If an error would not allow the caller
 to infer that an attempt was made (e.g. connection pool exception originating
-from the driver), the original error should be raised. If the retry failed due
-to another retryable error or some other error originating from the server, that
-error should be raised instead as the caller can infer that an attempt was made
-and the second error is likely more relevant (with respect to the current
-topology state).
-
-Drivers MUST NOT attempt to retry a write command with the same transaction ID
-more than once.
+from the driver), the error from the previous attempt should be raised.
 
 Consider the following pseudo-code:
 
@@ -433,7 +429,7 @@ Consider the following pseudo-code:
 
     /* If the server does not support retryable writes, execute the write as if
      * retryable writes are not enabled. */
-    if ( ! isRetryableWritesSupported()) {
+    if ( ! isRetryableWritesSupported(server)) {
       return executeCommand(server, command);
     }
 
@@ -441,58 +437,56 @@ Consider the following pseudo-code:
      * values will be derived from the implicit or explicit session object. */
     retryableCommand = addTransactionIdToCommand(command, session);
 
-    /* NetworkException and NotMasterException are both retryable errors. If
-     * caught, remember the exception, update SDAM accordingly, and proceed with
-     * retrying the operation.
-     *
-     * IllegalOperation (code 20) with errmsg starting with "Transaction
-     * numbers" MUST be re-raised with an actionable error message. */
-    try {
-      return executeCommand(server, retryableCommand);
-    } catch (NetworkException originalError) {
-      updateTopologyDescriptionForNetworkError(server, originalError);
-    } catch (NotMasterException originalError) {
-      updateTopologyDescriptionForNotMasterError(server, originalError);
-    } catch (IllegalOperation originalError) {
-      if ( originalError.code == 20 && originalError.errmsg.startsWith("Transaction numbers") ) {
-        originalError.errmsg = "This MongoDB deployment does not support retryable...";
-        throw originalError;
+    Exception previousError = null;
+    while true {
+      /* NetworkException and NotMasterException are both retryable errors. If
+       * caught, remember the exception, update SDAM accordingly, and proceed with
+       * retrying the operation.
+       *
+       * IllegalOperation (code 20) with errmsg starting with "Transaction
+       * numbers" MUST be re-raised with an actionable error message.
+       *
+       * Exceptions that originate from the driver (e.g. no socket available
+       * from the connection pool) are treated as fatal. Any such exception
+       * that occurs on the original attempt is propagated as-is. On retries,
+       * the error from the previous attempt is raised as it will be more
+       * relevant for the user. */
+      try {
+        return executeCommand(server, retryableCommand);
+      } catch (NetworkException networkError) {
+        updateTopologyDescriptionForNetworkError(server, networkError);
+        previousError = networkError;
+      } catch (NotMasterException notMasterError) {
+        updateTopologyDescriptionForNotMasterError(server, notMasterError);
+        previousError = notMasterError;
+      } catch (IllegalOperation error) {
+        if ( error.code == 20 && error.errmsg.startsWith("Transaction numbers") ) {
+          error.errmsg = "This MongoDB deployment does not support retryable...";
+          throw error;
+        }
+      } catch (DriverException error) {
+        if ( previousError == null ) {
+          return error;
+        }
+        return previousError;
       }
-    }
 
-    /* If we cannot select a writable server, do not proceed with retrying and
-     * throw the original error. The caller can then infer that an attempt was
-     * made and failed. */
-    try {
-      server = selectServer("writable");
-    } catch (Exception ignoredError) {
-      throw originalError;
-    }
+      /* If we cannot select a writable server, do not proceed with retrying and
+       * throw the previous error. The caller can then infer that an attempt was
+       * made and failed. */
+      try {
+        server = selectServer("writable");
+      } catch (Exception ignoredError) {
+        return previousError;
+      }
 
-    /* If the server selected for retrying is too old, throw the original error.
-     * The caller can then infer that an attempt was made and failed. This case
-     * is very rare, and likely means that the cluster is in the midst of a
-     * downgrade. */
-    if ( ! isRetryableWritesSupported()) {
-      throw originalError;
-    }
-
-    /* Allow any retryable error from the second attempt to propagate to our
-     * caller, as it will be just as relevant (if not more relevant) than the
-     * original error. For exceptions that originate from the driver (e.g. no
-     * socket available from the connection pool), we should raise the original
-     * error. Other exceptions originating from the server should be allowed to
-     * propagate. */
-    try {
-      return executeCommand(server, retryableCommand);
-    } catch (NetworkException secondError) {
-      updateTopologyDescriptionForNetworkError(server, secondError);
-      throw secondError;
-    } catch (NotMasterException secondError) {
-      updateTopologyDescriptionForNotMasterError(server, secondError);
-      throw secondError;
-    } catch (DriverException ignoredError) {
-      throw originalError;
+      /* If the server selected for retrying is too old, throw the previous error.
+       * The caller can then infer that an attempt was made and failed. This case
+       * is very rare, and likely means that the cluster is in the midst of a
+       * downgrade. */
+      if ( ! isRetryableWritesSupported()) {
+        throw previousError;
+      }
     }
   }
 
@@ -625,25 +619,6 @@ What do the additional error codes mean?
 The errors `HostNotFound`, `HostUnreachable`, `NetworkTimeout`,
 `SocketException` may be returned from mongos during problems routing to a
 shard. These may be transient, or localized to that mongos.
-
-Why are write operations only retried once?
--------------------------------------------
-
-The spec concerns itself with retrying write operations that encounter a
-retryable error (i.e. no response due to network error or a response indicating
-that the node is no longer a primary). A retryable error may be classified as
-either a transient error (e.g. dropped connection, replica set failover) or
-persistent outage. In the case of a transient error, the driver will mark the
-server as "unknown" per the `SDAM`_ spec. A subsequent retry attempt will allow
-the driver to rediscover the primary within the designated server selection
-timeout period (30 seconds by default). If server selection times out during
-this retry attempt, we can reasonably assume that there is a persistent outage.
-In the case of a persistent outage, multiple retry attempts are fruitless and
-would waste time. See `How To Write Resilient MongoDB Applications`_ for
-additional discussion on this strategy.
-
-.. _SDAM: ../server-discovery-and-monitoring/server-discovery-and-monitoring.rst
-.. _How To Write Resilient MongoDB Applications: https://emptysqua.re/blog/how-to-write-resilient-mongodb-applications/
 
 What if the transaction number overflows?
 -----------------------------------------
@@ -806,6 +781,8 @@ inconsistent with the server and potentially confusing to developers.
 
 Changes
 =======
+
+2020-12-01: Change the retry policy to link to the client-side operations timeout specification
 
 2020-09-01: State the the driver should only add the RetryableWriteError label
 to network errors when connected to a 4.4+ server.

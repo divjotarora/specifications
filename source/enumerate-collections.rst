@@ -12,8 +12,8 @@ Enumerating Collections
 :Status: Draft
 :Type: Standards
 :Server Versions: 1.8-2.7.5, 2.8.0-rc3 and later
-:Last Modified: March 17, 2020
-:Version: 0.6.0
+:Last Modified: December 1, 2020
+:Version: 0.7.0
 
 .. contents::
 
@@ -259,6 +259,13 @@ All methods:
 - MAY allow the ``cursor.batchSize`` option to be passed.
 - MUST use the *same* return type (ie, array or cursor) whether either a
   pre-2.7.6 server, a post-2.7.6 or a post-2.8.0-rc3 server is being used.
+- MUST apply timeouts per the `Client Side Operations Timeout
+  <client-side-operations-timeout/client-side-operations-timeout.rst>`__
+  specification.
+
+All methods that return cursors MUST support the timeout options documented
+in `Client Side Operations Timeout: Cursors
+<client-side-operations-timeout/client-side-operations-timeout.rst#Cursors>`__.
 
 Getting Collection Names
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -433,6 +440,9 @@ The shell implements the first algorithm for falling back if the
 
 Version History
 ===============
+Version 0.7.0 Changes
+    - Require that timeouts be applied per the client-side operations timeout spec.
+
 Version 0.6.0 Changes
     - MongoDB 4.4 no longer includes ``ns`` field in ``idIndex`` field for
       ``listCollections`` responses.
