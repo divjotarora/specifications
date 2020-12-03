@@ -239,7 +239,7 @@ A concept that represents pending requests for `Connections <#connection>`_. Whe
 
 -  **Thread-Safe**: When multiple threads attempt to enter or exit a WaitQueue, they do so in a thread-safe manner.
 -  **Ordered/Fair**: When `Connections <#connection>`_ are made available, they are issued out to threads in the order that the threads entered the WaitQueue.
--  **Timeout aggressively:** Members of a WaitQueue MUST timeout aggressively, and MUST leave the WaitQueue immediately upon timeout.
+-  **Timeout aggressively:** Members of a WaitQueue MUST timeout if they are enqueued for longer than the computed timeout and MUST leave the WaitQueue immediately in this case.
 
 The implementation details of a WaitQueue are left to the driver.
 Example implementations include:
