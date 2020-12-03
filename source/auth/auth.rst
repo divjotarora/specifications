@@ -178,8 +178,11 @@ handshake:
    #. A single invalid credential is the same as all credentials being
       invalid.
 
-If the authentication handshake fails for a socket, drivers MUST close all
-other general-use sockets connected to the same server.
+All blocking operatoins executed as part of the authentication handshake MUST
+apply timeouts per the `Client Side Operations Timeout
+<../client-side-operations-timeout/client-side-operations-timeout.rst>`__
+specification. If the authentication handshake fails for a socket, drivers
+MUST close all other general-use sockets connected to the same server.
 
 Mechanism Negotiation via Handshake
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

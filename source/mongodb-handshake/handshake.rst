@@ -56,7 +56,10 @@ The ``isMaster`` handshake MUST be performed on every socket to any and all serv
 upon establishing the connection to MongoDB, including reconnects of dropped
 connections and newly discovered members of a cluster. It MUST be the first
 command sent over the respective socket. If the command fails the client MUST
-disconnect.
+disconnect. Timeouts MUST be applied to this command per the `Client Side
+Operations Timeout
+<../client-side-operations-timeout/client-side-operations-timeout.rst>`__
+specification.
 
 ``isMaster`` commands issued after the initial connection handshake MUST NOT
 contain handshake arguments. Any subsequent ``isMaster`` calls, such as the ones

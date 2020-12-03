@@ -479,7 +479,7 @@ Checking out a `Connection`_ involves submitting a request to the WaitQueue and,
 once that request reaches the front of the queue, having the Pool find or create
 a `Connection`_ to fulfill that request. Requests MUST be subject to a timeout
 which is computed per the rules in
-`Client-Side Operations Timeout: Server Selection
+`Client Side Operations Timeout: Server Selection
 <../client-side-operations-timeout/client-side-operations-timeout.rst#server-selection>`_.
 
 To service a request for a `Connection`_, the Pool MUST first iterate over the

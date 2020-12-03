@@ -107,13 +107,15 @@ invalid, the driver SHOULD end the connection.
     has a list of OCSP responder endpoints, and
     ``tlsDisableOCSPEndpointCheck`` or
     ``tlsDisableCertificateRevocationCheck`` is false (`if the driver
-    supports these options <MongoClient Configuration>`_), the driver
-    SHOULD send HTTP requests to the responders in parallel. The first
-    valid response that concretely marks the certificate status as
-    good or revoked should be used. A five-second timeout SHOULD be
-    used for the requests.  The status for a response should only be
-    checked if the response is valid per `RFC 6960 Section 3.2
-    <https://tools.ietf.org/html/rfc6960#section-3.2>`_
+    supports these options <MongoClient Configuration>`_), the driver SHOULD
+    send HTTP requests to the responders in parallel. The first valid
+    response that concretely marks the certificate status as good or revoked
+    should be used. A timeout should be applied to requests per the `Client
+    Side Operations Timeout
+    <../client-side-operations-timeout/client-side-operations-timeout>`__
+    specification, with a default timeout of five seconds. The status for a
+    response should only be checked if the response is valid per `RFC 6960
+    Section 3.2 <https://tools.ietf.org/html/rfc6960#section-3.2>`_
 
 8.  If any unvalidated intermediate certificates remain and those
     certificates have OCSP endpoints, for each certificate, the
