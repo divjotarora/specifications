@@ -54,14 +54,15 @@ existing options.
 timeoutMS
 ~~~~~~~~~
 
-This integer option specifies the per-operation timeout value in
+This 64-bit integer option specifies the per-operation timeout value in
 milliseconds. The default value is unset. Both unset and an explicit value of
 0 mean infinite, though some client-side timeouts like
-``serverSelectionTimeoutMS`` will still apply. This value MUST be
-configurable at the level of a MongoClient, MongoDatabase, MongoCollection,
-or of a single operation. However, if the option is specified at any level,
-it cannot be later changed to unset. At each level, the value MUST be
-inherited from the previous level if it is not explicitly specified.
+``serverSelectionTimeoutMS`` will still apply. Drivers MUST error if a
+negative value is specified. This value MUST be configurable at the level of
+a MongoClient, MongoDatabase, MongoCollection, or of a single operation.
+However, if the option is specified at any level, it cannot be later changed
+to unset. At each level, the value MUST be inherited from the previous level
+if it is not explicitly specified.
 
 See `timeoutMS cannot be changed to unset once it’s specified`_.
 
@@ -111,6 +112,9 @@ is used in conjunction with one of the options in the deprecated list. This
 validation MUST NOT be done during MongoDatabase or MongoCollection
 configuration.
 
+See `Option validation does not occur at the database or collection levels`__
+and `Option validation does not occur at the database or collection levels`__.
+
 Timeout Behavior
 ----------------
 
@@ -150,6 +154,9 @@ ClientSession (see `Convenient Transactions API`_). In this case, the timeout
 on the session MUST be used as the ``timeoutMS`` value for the operation.
 Drivers MUST raise a validation error if an explicit session with a timeout
 is used and the ``timeoutMS`` option is set at the operation level.
+
+See `Option validation does not occur at the database or collection levels`__
+and `Option validation does not occur at the database or collection levels`__.
 
 Errors
 ~~~~~~
@@ -623,6 +630,40 @@ network issue. To accomplish this, the ``connectTimeoutMS`` option is not
 deprecated by this specification. Drivers also use ``connectTimeoutMS`` to
 derive a socket timeout for monitoring connections, which are not subject to
 timeoutMS.
+
+Drivers error if timeoutMS is used with a deprecated timeout option
+-------------------------------------------------------------------
+
+Supporting both ``timeoutMS`` and a deprecated timeout option like
+``socketTimeoutMS`` at the same time would lead to confusing semantics that
+are difficult to document and understand. We could consider taking the
+minimum of the two options when setting timeouts, but this would be confusing
+when overriding ``timeoutMS`` for a specific operation because the operation
+could fail much earlier than expected. For example, in this case:
+
+.. code:: python
+
+   client = MongoClient(uri, timeoutMS=1000, socketTimeoutMS=100)
+   client.listDatabaseNames(timeoutMS=2000)
+
+An application would expect ``listDatabaseNames`` to fail after two seconds and
+the command sent to the server would include a ``maxTimeMS`` field derived from
+this value, but it would actually fail if the server takes more than 100ms. To
+avoid this confusion, drivers error for these option combinations.
+
+Option validation does not occur at the database or collection levels
+---------------------------------------------------------------------
+
+Validation for ``timeoutMS`` being used with a deprecated timeout option
+occurs at the MongoClient level because we want to catch issues as early as
+possible and also at the operation level because ``timeoutMS`` can be
+specified for an operation even if it was not set on the MongoClient. Drivers
+do not perform validation for database and collection constructors even
+though this might allow invalid database/collection objects to be
+constructed. This is because it is awkward for languages that use exceptions
+(e.g. Java) to throw in these constructors and it would be a
+backwards-breaking API change for languages that return explicit error values
+(e.g Go) to return errors.
 
 Background connections use connectTimeoutMS as the timeout for handshake commands
 ---------------------------------------------------------------------------------
