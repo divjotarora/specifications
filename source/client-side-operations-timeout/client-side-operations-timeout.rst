@@ -112,7 +112,7 @@ is used in conjunction with one of the options in the deprecated list. This
 validation MUST NOT be done during MongoDatabase or MongoCollection
 configuration.
 
-See `Option validation does not occur at the database or collection levels`__
+See `Drivers error if timeoutMS is used with a deprecated timeout option`__
 and `Option validation does not occur at the database or collection levels`__.
 
 Timeout Behavior
@@ -155,7 +155,7 @@ on the session MUST be used as the ``timeoutMS`` value for the operation.
 Drivers MUST raise a validation error if an explicit session with a timeout
 is used and the ``timeoutMS`` option is set at the operation level.
 
-See `Option validation does not occur at the database or collection levels`__
+See `Drivers error if timeoutMS is used with a deprecated timeout option`__
 and `Option validation does not occur at the database or collection levels`__.
 
 Errors
