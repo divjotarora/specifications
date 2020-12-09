@@ -258,15 +258,12 @@ Server Selection
 
 If ``timeoutMS`` is set, drivers MUST use ``min(serverSelectionTimeoutMS,
 remaining timeoutMS)``, referred to as ``computedServerSelectionTimeout`` as
-the timeout for server selection and connection checkout. Server selection
-MUST be tried once using the last known ``TopologyDescription`` associated
-with the MongoClient even if the timeout has expired. If the initial attempt
-fails, future iterations of the server selection loop MUST fail once the
-timeout expires.
+the timeout for server selection and connection checkout. The server selection
+loop MUST fail with a timeout error once the timeout expires.
 
-After a server has been selected, drivers MUST get a connection from its pool
-if one exists even if ``computedServerSelectionTimeout`` has expired. If a
-new connection is required, ``min(connectTimeoutMS, remaining
+After a server has been selected, drivers MUST use the remaining
+``computedServerSelectionTimeout`` value as the timeout for connection
+checkout. If a new connection is required, ``min(connectTimeoutMS, remaining
 computedServerSelectionTimeout)`` MUST be used as the timeout for TCP socket
 establishment. Any network requests required to create or authenticate a
 connection (e.g. HTTP requests to OCSP responders) MUST use
