@@ -107,14 +107,6 @@ The following options for CRUD methods MUST be deprecated in favor of
 
 - ``maxCommitTimeMS``
 
-Drivers MUST throw an error during MongoClient configuration if ``timeoutMS``
-is used in conjunction with one of the options in the deprecated list. This
-validation MUST NOT be done during MongoDatabase or MongoCollection
-configuration.
-
-See `Drivers error if timeoutMS is used with a deprecated timeout option`__
-and `Option validation does not occur at the database or collection levels`__.
-
 Timeout Behavior
 ----------------
 
@@ -145,18 +137,16 @@ reads documents from a cursor into an array, etc).
 Validation and Overrides
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-When executing an operation that supports the ``timeoutMS`` option, drivers
-MUST raise a validation error if ``timeoutMS`` is set on the operation or is
-inherited from the collection/database/client levels in conjunction with one
-of the deprecated timeout options. In addition to being set at these levels,
+When executing an operation, drivers MUST ignore any deprecated timeout
+options if ``timeoutMS`` is set on the operation or is inherited from the
+collection/database/client levels. In addition to being set at these levels,
 the timeout for an operation can also be expressed via an explicit
 ClientSession (see `Convenient Transactions API`_). In this case, the timeout
 on the session MUST be used as the ``timeoutMS`` value for the operation.
 Drivers MUST raise a validation error if an explicit session with a timeout
 is used and the ``timeoutMS`` option is set at the operation level.
 
-See `Drivers error if timeoutMS is used with a deprecated timeout option`__
-and `Option validation does not occur at the database or collection levels`__.
+See `timeoutMS overrides deprecated timeout options`__.
 
 Errors
 ~~~~~~
@@ -631,39 +621,19 @@ deprecated by this specification. Drivers also use ``connectTimeoutMS`` to
 derive a socket timeout for monitoring connections, which are not subject to
 timeoutMS.
 
-Drivers error if timeoutMS is used with a deprecated timeout option
--------------------------------------------------------------------
+timeoutMS overrides deprecated timeout options
+----------------------------------------------
 
-Supporting both ``timeoutMS`` and a deprecated timeout option like
+Applying both ``timeoutMS`` and a deprecated timeout option like
 ``socketTimeoutMS`` at the same time would lead to confusing semantics that
-are difficult to document and understand. We could consider taking the
-minimum of the two options when setting timeouts, but this would be confusing
-when overriding ``timeoutMS`` for a specific operation because the operation
-could fail much earlier than expected. For example, in this case:
-
-.. code:: python
-
-   client = MongoClient(uri, timeoutMS=1000, socketTimeoutMS=100)
-   client.listDatabaseNames(timeoutMS=2000)
-
-An application would expect ``listDatabaseNames`` to fail after two seconds and
-the command sent to the server would include a ``maxTimeMS`` field derived from
-this value, but it would actually fail if the server takes more than 100ms. To
-avoid this confusion, drivers error for these option combinations.
-
-Option validation does not occur at the database or collection levels
----------------------------------------------------------------------
-
-Validation for ``timeoutMS`` being used with a deprecated timeout option
-occurs at the MongoClient level because we want to catch issues as early as
-possible and also at the operation level because ``timeoutMS`` can be
-specified for an operation even if it was not set on the MongoClient. Drivers
-do not perform validation for database and collection constructors even
-though this might allow invalid database/collection objects to be
-constructed. This is because it is awkward for languages that use exceptions
-(e.g. Java) to throw in these constructors and it would be a
-backwards-breaking API change for languages that return explicit error values
-(e.g Go) to return errors.
+are difficult to document and understand. When first writing this
+specification, we considered having drivers error in this situation to catch
+mismatched timeouts as early as possible. However, because ``timeoutMS`` can
+be set at any level, this behavior could lead to unanticipated runtime errors
+if an application set ``timeoutMS`` for a specific operation and the
+MongoClient used in production was configured with a deprecated timeout
+option. To have clear semantics and avoid unexpected errors in applications, we
+decided that ``timeoutMS`` should override deprecated timeout options.
 
 Background connections use connectTimeoutMS as the timeout for handshake commands
 ---------------------------------------------------------------------------------
