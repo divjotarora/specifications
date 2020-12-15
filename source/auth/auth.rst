@@ -178,7 +178,7 @@ handshake:
    #. A single invalid credential is the same as all credentials being
       invalid.
 
-All blocking operatoins executed as part of the authentication handshake MUST
+All blocking operations executed as part of the authentication handshake MUST
 apply timeouts per the `Client Side Operations Timeout
 <../client-side-operations-timeout/client-side-operations-timeout.rst>`__
 specification. If the authentication handshake fails for a socket, drivers

@@ -301,6 +301,8 @@ deviation guidance, see the `CRUD specification
     /**
      * Corresponds to the "wtimeout" field in the WriteConcern document sent to
      * the server.
+     *
+     * NOTE: This option is deprecated in favor of timeoutMS.
      */
     wtimeoutMS: Optional<Int64>
   }
@@ -313,6 +315,13 @@ FSync SHOULD be considered deprecated.  Those drivers supporting the deprecated
 ``fsync`` option SHOULD treat ``fsync`` identically to ``journal`` in terms of
 consistency with ``w`` and whether a ``WriteConcern`` that specifies ``fsync``
 is acknowledged or unacknowledged.
+
+
+wtimeoutMS
+----------
+
+``wtimeoutMS`` MUST be considered deprecated in favor of `timeoutMS
+<client-side-operations-timeout/client-side-operations-timeout.rst#timeoutMS>`__.
 
 
 Server’s Default WriteConcern

@@ -174,7 +174,7 @@ Error Transformations
 `````````````````````
 
 When using the new timeout error type, drivers MUST transform timeout errors
-from external sources into the new error. The first such error is the
+from external sources into the new error. One such error is the
 ``MaxTimeMSExpired`` server error. When checking for this error, drivers MUST
 only check that the error code is 50 and MUST NOT check the code name or
 error message. This error can be present in a top-level response document
@@ -300,9 +300,10 @@ Drivers MUST use an algorithm that calculates an approximation for the 90th
 percentile RTT to avoid storing all RTT samples in memory. The ``maxTimeMS``
 field MUST be appended after all blocking work is complete.
 
-After wire message construction, drivers MUST check for timeout expiration
-before writing the message to the server. If the timeout has expired, drivers
-MUST return the connection to the pool and raise a timeout exception.
+After wire message construction, drivers MUST check for timeout before
+writing the message to the server. If the timeout has expired or the amount
+of time remaining is less than the selected server's 90th percentile RTT,
+drivers MUST return the connection to the pool and raise a timeout exception.
 Otherwise, drivers MUST set the connection’s write timeout to the remaining
 ``timeoutMS`` value before writing a message to the server. After the write
 is complete, drivers MUST check for timeout expiration before reading the
