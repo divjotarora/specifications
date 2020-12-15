@@ -335,16 +335,9 @@ If an operation requires a retry per the retryable reads or writes
 specifications and ``timeoutMS`` is set to a non-zero value, drivers MUST
 retry operations as many times as possible before the timeout expires or a
 retry attempt returns a non-retryable error. Once the timeout expires, a
-timeout error MUST be raised. If ``timeoutMS`` is unset or is explicitly set
-to zero, drivers MUST retry operations as many times as needed until a retry
-attempt returns a non-retryable error. However, if ``timeoutMS`` is unset but
-the ``socketTimeoutMS`` option is set, drivers MUST stop retrying after
-encountering two socket timeout errors, either consecutive or
-non-consecutive. In this case, the second socket timeout error MUST be
-propagated to the application.
+timeout error MUST be raised.
 
-See `Retryable reads/writes behavior`_ and `Why don’t drivers use
-backoff/jitter between retry attempts?`_.
+See `Why don’t drivers use backoff/jitter between retry attempts?`_.
 
 Client Side Encryption
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -695,31 +688,6 @@ would require a potentially expensive lookup in the command document. To
 avoid this additional cost, drivers are only required to document the
 behavior and suggest that ``timeoutMS`` be used instead of including a manual
 ``maxTimeMS`` field.
-
-Retryable reads/writes behavior
--------------------------------
-
-The initial versions of the retryable reads and writes specifications
-mandated that drivers retry operations only once if the initial attempt
-failed with a transient error. If ``timeoutMS`` is set to a non-zero value,
-however, it makes sense to retry as many times as needed until the timeout
-expires. If ``timeoutMS`` is unset or explicitly set to zero, the application
-is opting into the possibility of an infinite execution time for an
-operation, so drivers retry as many times as needed until the operation
-succeeds. If the cluster is experiencing a transient failure (e.g. rolling
-server restarts), drivers expect the operation to succeed after some retries.
-However, if the cluster is actually unhealthy for an extended amount of time,
-we expect monitoring checks to start failing and servers to be marked unknown
-until server selection fails. Because server selection timeouts are not
-retryable, the operation will eventually fail.
-
-We make one exception for socket timeouts when the ``socketTimeoutMS`` option
-is used. Such timeouts could occur due to transient network errors, so it’s
-useful to consider them retryable. However, they could also occur if the
-server requires more time than ``socketTimeoutMS`` to complete an operation.
-In this case, retrying indefinitely would result in an infinite retry loop.
-To maintain resiliency but avoid the undesirable infinite loop scenario,
-socket timeouts are only considered retryable once.
 
 Why don’t drivers use backoff/jitter between retry attempts?
 ------------------------------------------------------------

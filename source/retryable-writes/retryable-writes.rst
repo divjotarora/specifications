@@ -377,17 +377,23 @@ Drivers MUST NOT attempt to retry a write command on any other error.
 If the first attempt of a write command including a transaction ID encounters
 a retryable error, the driver MUST update its topology according to the SDAM
 spec (see: `Error Handling`_) and capture this original retryable error.
-Drivers MUST then proceed with retrying per `Client Side Operations Timeout:
-Retryability
+Drivers MUST then retry the operation as many times as necessary until a
+retry attempt succeeds or returns a non-retryable error. Additionally, if the
+``socketTimeoutMS`` option is set and is being used to derive socket timeouts
+for the operation, drivers MUST stop retrying after encountering two socket
+timeout errors, either consecutive or non-consecutive. In this case, the
+second socket timeout error MUST be propagated to the application. Finally,
+drivers MUST stop retrying if the operation times out per `Client Side
+Operations Timeout: Retryability
 <../client-side-operations-timeout/client-side-operations-timeout.rst#retryability>`__.
-For each retry attempt, drivers MUST select a writable server.
 
 .. _Error Handling: ../server-discovery-and-monitoring/server-discovery-and-monitoring.rst#error-handling
 
-If the driver cannot select a server for a retry attempt or the selected
-server does not support retryable writes, retrying is not possible and
-drivers MUST raise the retryable error from the previous attempt. In both
-cases, the caller is able to infer that an attempt was made.
+For each retry attempt, drivers MUST select a writable server. If the driver
+cannot select a server for a retry attempt or the selected server does not
+support retryable writes, retrying is not possible and drivers MUST raise the
+retryable error from the previous attempt. In both cases, the caller is able
+to infer that an attempt was made.
 
 If a retry attempt also fails, drivers MUST update their topology according to
 the SDAM spec (see: `Error Handling`_). If an error would not allow the caller
@@ -438,6 +444,7 @@ Consider the following pseudo-code:
     retryableCommand = addTransactionIdToCommand(command, session);
 
     Exception previousError = null;
+    int numSocketTimeouts = 0;
     while true {
       /* NetworkException and NotMasterException are both retryable errors. If
        * caught, remember the exception, update SDAM accordingly, and proceed with
@@ -455,7 +462,18 @@ Consider the following pseudo-code:
         return executeCommand(server, retryableCommand);
       } catch (NetworkException networkError) {
         updateTopologyDescriptionForNetworkError(server, networkError);
+
+        // Check if we've reached the socket timeout limit and terminate the
+        // loop.
+        if (networkError is NetworkTimeoutException) {
+          numSocketTimeouts++;
+          if (numSocketTimeouts == 2) {
+            throw networkError;
+          }
+        }
+
         previousError = networkError;
+
       } catch (NotMasterException notMasterError) {
         updateTopologyDescriptionForNotMasterError(server, notMasterError);
         previousError = notMasterError;
@@ -778,6 +796,28 @@ only add the label to an error when the client has added a txnNumber to the
 command, which only happens when the retryWrites option is true on the client.
 For the driver to add the label even if retryWrites is not true would be
 inconsistent with the server and potentially confusing to developers.
+
+Why did a previous version of the spec require that drivers retry operations only once?
+---------------------------------------------------------------------------------------
+
+The initial version of this specification mandated that drivers retry
+operations only once if the initial attempt failed with a transient error.
+However, this is not resilient to cascading failures in a cluster such as
+rolling server restarts during planned maintenance events. If the cluster is
+experiencing such transient failures, drivers expect the operation to succeed
+after some retries. If the cluster is actually in a permanently unhealthy state,
+though, we expect monitoring checks and background connection pool maintenance
+routines to start failing and servers to be marked unknown until server
+selection fails. Because server selection timeouts are not retryable, the
+operation will eventually fail.
+
+We make one exception for socket timeouts derived from the
+``socketTimeoutMS`` option. Such timeouts could occur due to transient
+network errors, so it’s useful to consider them retryable. However, they
+could also occur if the server requires more time than ``socketTimeoutMS`` to
+complete an operation. In this case, retrying indefinitely would result in an
+infinite retry loop. To maintain resiliency but avoid the undesirable
+infinite loop scenario, socket timeouts are only considered retryable once.
 
 Changes
 =======

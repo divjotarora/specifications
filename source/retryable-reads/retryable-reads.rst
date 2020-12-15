@@ -268,8 +268,14 @@ read command encounters a retryable error, the driver MUST update its
 topology according to the Server Discovery and Monitoring spec (see `SDAM:
 Error Handling
 <https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#error-handling>`__)
-and capture this original retryable error. Drivers MUST then proceed with
-retrying per `Client Side Operations Timeout: Retryability
+and capture this original retryable error. Drivers MUST then retry the
+operation as many times as necessary until a retry attempt succeeds or
+returns a non-retryable error. Additionally, if the ``socketTimeoutMS``
+option is set and is being used to derive socket timeouts for the operation,
+drivers MUST stop retrying after encountering two socket timeouts, either
+consecutive or non-consecutive. In this case, the second socket timeout error
+MUST be propagated to the application. Finally, drivers MUST stop retrying if
+the operation times out per `Client Side Operations Timeout: Retryability
 <../client-side-operations-timeout/client-side-operations-timeout.rst#retryability>`__.
 
 3a. Selecting the server for retry
@@ -365,6 +371,7 @@ and reflects the flow described above.
     }
 
     Exception previousError = null; 
+    int numSocketTimeouts = 0;
     while true {
       /* NetworkException and NotMasterException are both retryable errors. If
        * caught, remember the exception, update SDAM accordingly, and proceed with
@@ -379,6 +386,16 @@ and reflects the flow described above.
         return executeCommand(connection, retryableCommand);
       } catch (NetworkException networkError) {
         updateTopologyDescriptionForNetworkError(server, networkError);
+
+        // Check if we've reached the socket timeout limit and terminate the
+        // loop.
+        if (networkError is NetworkTimeoutException) {
+          numSocketTimeouts++;
+          if (numSocketTimeouts == 2) {
+            throw networkError;
+          }
+        }
+
         previousError = networkError;
       } catch (NotMasterException notMasterError) {
         updateTopologyDescriptionForNotMasterError(server, notMasterError);
@@ -620,6 +637,27 @@ retry reads because the resilience benefit of retryable reads outweighs the
 minor risk of degraded performance. Additionally, any customers experiencing
 degraded performance can simply disable ``retryableReads``.
 
+Why did a previous version of the spec require that drivers retry operations only once?
+---------------------------------------------------------------------------------------
+
+The initial version of this specification mandated that drivers retry
+operations only once if the initial attempt failed with a transient error.
+However, this is not resilient to cascading failures in a cluster such as
+rolling server restarts during planned maintenance events. If the cluster is
+experiencing such transient failures, drivers expect the operation to succeed
+after some retries. If the cluster is actually in a permanently unhealthy state,
+though, we expect monitoring checks and background connection pool maintenance
+routines to start failing and servers to be marked unknown until server
+selection fails. Because server selection timeouts are not retryable, the
+operation will eventually fail.
+
+We make one exception for socket timeouts derived from the
+``socketTimeoutMS`` option. Such timeouts could occur due to transient
+network errors, so it’s useful to consider them retryable. However, they
+could also occur if the server requires more time than ``socketTimeoutMS`` to
+complete an operation. In this case, retrying indefinitely would result in an
+infinite retry loop. To maintain resiliency but avoid the undesirable
+infinite loop scenario, socket timeouts are only considered retryable once.
 
 Changelog 
 ==========
