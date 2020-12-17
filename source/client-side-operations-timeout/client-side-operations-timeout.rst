@@ -485,8 +485,14 @@ out before it can finish processing the existing oplog.
 
 See `Change stream behavior`_.
 
+Sessions
+--------
+
+Explicit `ClientSession <../sessions/driver-sessions.rst#clientsession>`_ MUST
+inherit ``timeoutMS`` from their parent MongoClient.
+
 Convenient Transactions API
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If ``timeoutMS`` is set, drivers MUST apply it to the entire
 ``withTransaction`` call. To propagate the timeout to the user-supplied
