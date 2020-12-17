@@ -146,7 +146,7 @@ on the session MUST be used as the ``timeoutMS`` value for the operation.
 Drivers MUST raise a validation error if an explicit session with a timeout
 is used and the ``timeoutMS`` option is set at the operation level.
 
-See `timeoutMS overrides deprecated timeout options`__.
+See `timeoutMS overrides deprecated timeout options`_.
 
 Errors
 ~~~~~~
