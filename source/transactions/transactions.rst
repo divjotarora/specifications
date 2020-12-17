@@ -176,6 +176,27 @@ This section is an overview of the public API for transactions:
         // Options defined in other specifications...
     }
 
+    class CommitTransactionOptions {
+        /**
+         * The timeoutMS value for the commitTransaction operation.
+         */
+        Optional<int64> timeoutMS;
+    }
+
+    class AbortTransactionOptions {
+        /**
+         * The timeoutMS value for the commitTransaction operation.
+         */
+        Optional<int64> timeoutMS;
+    }
+
+    class EndSessionOptions {
+        /**
+         * The timeoutMS value for the commitTransaction operation.
+         */
+        Optional<int64> timeoutMS;
+    }
+
     interface ClientSession {
         /**
          * Starts a new transaction with the given options. This session's
@@ -193,19 +214,19 @@ This section is an overview of the public API for transactions:
          * Commits the currently active transaction in this session.
          * Raises an error if this session has no transaction.
          */
-        void commitTransaction();
+        void commitTransaction(Optional<CommitTransactionOptions> options);
 
         /**
          * Aborts the currently active transaction in this session.
          * Raises an error if this session has no transaction.
          */
-        void abortTransaction();
+        void abortTransaction(Optional<AbortTransactionOptions> options);
 
         /**
          * Aborts any currently active transaction and ends this session.
          * MUST NOT raise an error.
          */
-        void endSession();
+        void endSession(Optional<EndSessionOptions> options);
 
         // Methods defined in other specifications...
     }
@@ -327,6 +348,54 @@ defaultTransactionOptions
 The default TransactionOptions to use for transactions started on this
 session.
 
+**CommitTransactionOptions**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This type MUST be implemented such that future options can be added without
+breaking backward compatibility.
+
+timeoutMS
+^^^^^^^^^
+
+This is the timeout to apply to the ``commitTransaction`` operation. Drivers
+MUST only support this option once they have implemented the `Client Side
+Operations Timeout specification
+<../client-side-operations-timeout/client-side-operations-timeout.rst>`_.
+Note that this property is optional and the default is unset and it MUST be
+applied according to the rules outlined in that specification.
+
+**AbortTransactionOptions**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This type MUST be implemented such that future options can be added without
+breaking backward compatibility.
+
+timeoutMS
+^^^^^^^^^
+
+This is the timeout to apply to the ``abortTransaction`` operation. Drivers
+MUST only support this option once they have implemented the `Client Side
+Operations Timeout specification
+<../client-side-operations-timeout/client-side-operations-timeout.rst>`_.
+Note that this property is optional and the default is unset and it MUST be
+applied according to the rules outlined in that specification.
+
+**EndSessionOptions**
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This type MUST be implemented such that future options can be added without
+breaking backward compatibility.
+
+timeoutMS
+^^^^^^^^^
+
+This is the timeout to apply to the ``endSession`` operation. Drivers MUST
+only support this option once they have implemented the `Client Side
+Operations Timeout specification
+<../client-side-operations-timeout/client-side-operations-timeout.rst>`_.
+Note that this property is optional and the default is unset and it MUST be
+applied according to the rules outlined in that specification.
+
 **ClientSession changes**
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -442,12 +511,12 @@ session is in the "starting transaction" state, meaning no operations
 have been performed on this transaction, drivers MUST NOT run the
 commitTransaction command.
 
-commitTransaction is a retryable write command. Drivers MUST retry once
-after commitTransaction fails with a retryable error according to the
-Retryable Writes Specification, regardless of whether retryWrites is set
-on the MongoClient or not.
+commitTransaction is a retryable write command. Drivers MUST retry after
+commitTransaction fails with a retryable error according to the Retryable
+Writes Specification, regardless of whether retryWrites is set on the
+MongoClient or not.
 
-When commitTransaction is retried, either by the driver's internal retry-once
+When commitTransaction is retried, either by the driver's internal retry
 logic or explicitly by the user calling commitTransaction again, drivers MUST
 apply ``w: majority`` to the write concern of the commitTransaction command. If
 the transaction is using a `writeConcern`_ that is not the server default (i.e.
@@ -492,19 +561,18 @@ session is in the "starting transaction" state, meaning, no operations
 have been performed on this transaction, drivers MUST NOT run the
 abortTransaction command.
 
-abortTransaction is a retryable write command. Drivers MUST retry once
+abortTransaction is a retryable write command. Drivers MUST retry
 after abortTransaction fails with a retryable error according to the
 `Retryable Writes Specification`_., regardless of whether retryWrites is set
 on the MongoClient or not.
 
-After the retryable write attempt, drivers MUST ignore all errors from
-the abortTransaction command. Errors from abortTransaction are
-meaningless to the application because they cannot do anything to
-recover from the error. The transaction will ultimately be aborted by
-the server anyway either upon reaching an age limit or when the
-application starts a new transaction on this session, see `Drivers
-ignore all abortTransaction
-errors <#drivers-ignore-all-aborttransaction-errors>`__.
+If the operation times out or fails with a non-retryable error, drivers MUST
+ignore all errors from the abortTransaction command. Errors from
+abortTransaction are meaningless to the application because they cannot do
+anything to recover from the error. The transaction will ultimately be
+aborted by the server anyway either upon reaching an age limit or when the
+application starts a new transaction on this session, see `Drivers ignore all
+abortTransaction errors <#drivers-ignore-all-aborttransaction-errors>`__.
 
 endSession changes
 ^^^^^^^^^^^^^^^^^^
@@ -917,7 +985,7 @@ UnknownTransactionCommitResult
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The commitTransaction command is considered a retryable write. The
-driver will automatically retry the commitTransaction once after a
+driver will automatically retry the commitTransaction after a
 retryable error. Although this adds a layer of protection, the driver’s
 retry attempt of a commitTransaction may again fail with a retryable
 error. In that case, both the driver and the application do not know the
