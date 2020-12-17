@@ -335,6 +335,7 @@ Fields:
   from the address the client uses.
 * (=) error: information about the last error related to this server. Default null.
 * roundTripTime: the duration of the ismaster call. Default null.
+* ninetiethPercentileRoundTripTime: the 90th percentile RTT for the server. Default null.
 * lastWriteDate: a 64-bit BSON datetime or null.
   The "lastWriteDate" from the server's most recent ismaster response.
 * opTime: an opTime or null.
@@ -659,9 +660,10 @@ it stores error information in the ServerDescription's error field.
 roundTripTime
 `````````````
 
-Drivers MUST record the server's `round trip time`_ (RTT)
-after each successful call to ismaster. The Server Selection Spec describes how
-RTT is averaged and how it is used in server selection.
+Drivers MUST record the server's `round trip time`_ (RTT) after each
+successful call to ismaster. The Server Selection Spec describes how RTT is
+averaged and how it is used in server selection. Drivers MUST also record the
+server's 90th percentile RTT per `Server Monitoring (Measuring RTT)`_.
 
 If an ismaster call fails, the RTT is not updated.
 Furthermore, while a server's type is Unknown its RTT is null,
@@ -2368,3 +2370,4 @@ stale application errors.
 .. _clients update the topology from each handshake: server-monitoring.rst#clients-update-the-topology-from-each-handshake
 .. _single-threaded monitoring: server-monitoring.rst#single-threaded-monitoring
 .. _Connection Monitoring and Pooling spec: /source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst
+.. _Server Monitoring (Measuring RTT): server-monitoring.rst#measuring-rtt

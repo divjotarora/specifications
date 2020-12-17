@@ -296,9 +296,7 @@ MUST be ``remaining timeoutMS - 90th percentile RTT``. If not, drivers MUST
 return a timeout error without attempting to send the message to the server.
 This is done to ensure that an operation is not routed to the server if it
 will likely fail with a socket timeout as that could cause connection churn.
-Drivers MUST use an algorithm that calculates an approximation for the 90th
-percentile RTT to avoid storing all RTT samples in memory. The ``maxTimeMS``
-field MUST be appended after all blocking work is complete.
+The ``maxTimeMS`` field MUST be appended after all blocking work is complete.
 
 After wire message construction, drivers MUST check for timeout before
 writing the message to the server. If the timeout has expired or the amount
