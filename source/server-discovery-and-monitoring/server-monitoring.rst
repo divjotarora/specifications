@@ -548,7 +548,8 @@ Clients MUST use RTT samples to calculate an approximation for the 90th
 percentile RTT for each server using the `t-digest algorithm`_.
 
 When constructing a ServerDescription from a streaming isMaster response,
-clients MUST use the current roundTripTime from the RTT task.
+clients MUST use average and 90th percentile round trip times from the RTT
+task.
 
 See the pseudocode in the `RTT thread`_ section for an example implementation.
 
@@ -717,7 +718,7 @@ The event API here is assumed to be like the standard `Python Event
                 # The server does not support topologyVersion.
                 response = call {isMaster: 1}
 
-            return ServerDescription(response, rtt=rttMonitor.average())
+            return ServerDescription(response, rtt=rttMonitor.average(), ninetiethPercentileRtt=rttMonitor.ninetiethPercentile())
         except Exception as exc:
             close connection
             rttMonitor.reset()
