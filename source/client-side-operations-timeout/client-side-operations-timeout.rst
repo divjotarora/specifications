@@ -514,20 +514,21 @@ See `withTransaction communicates timeoutMS via ClientSession`_ and
 GridFS API
 ----------
 
-Drivers MUST support the ``timeoutMS`` option for all methods in the GridFS
-Bucket API. For methods that create streams (e.g. ``open_upload_stream``),
-the option MUST cap the lifetime of the entire stream. This MUST include the
-time taken by any operations executed during stream construction,
-reads/writes, and close/abort calls. For example, if a stream is created at
-time ``T``, the final ``close`` call on the stream MUST finish all blocking
-work before time ``T + timeoutMS``. Methods that interact with a
-user-provided stream (e.g. ``upload_from_stream``) MUST use ``timeoutMS`` as
-the timeout for the entire upload/download operation. If the user-provided
-streams do not support timeouts, drivers MUST document that the timeout for
-these methods may be breached if calls to interact with the stream take
-longer than the remaining timeout. If ``timeoutMS`` is set, all cursors
-created for GridFS API operations MUST internally set the ``timeoutMode``
-option to ``CURSOR_LIFETIME``.
+GridFS buckets MUST inherit ``timeoutMS`` from their parent MongoDatabase
+instance and all methods in the GridFS Bucket API MUST support the
+``timeoutMS`` option. For methods that create streams (e.g.
+``open_upload_stream``), the option MUST cap the lifetime of the entire
+stream. This MUST include the time taken by any operations executed during
+stream construction, reads/writes, and close/abort calls. For example, if a
+stream is created at time ``T``, the final ``close`` call on the stream MUST
+finish all blocking work before time ``T + timeoutMS``. Methods that interact
+with a user-provided stream (e.g. ``upload_from_stream``) MUST use
+``timeoutMS`` as the timeout for the entire upload/download operation. If the
+user-provided streams do not support timeouts, drivers MUST document that the
+timeout for these methods may be breached if calls to interact with the
+stream take longer than the remaining timeout. If ``timeoutMS`` is set, all
+cursors created for GridFS API operations MUST internally set the
+``timeoutMode`` option to ``CURSOR_LIFETIME``.
 
 See `GridFS streams behavior`_.
 
