@@ -499,7 +499,7 @@ Sessions
 --------
 
 The `SessionOptions <../sessions/driver-sessions.rst#mongoclient-changes>`_
-used to construct explicit explicit `ClientSession
+used to construct explicit `ClientSession
 <../sessions/driver-sessions.rst#clientsession>`_ instances MUST accept a new
 ``defaultTimeoutMS`` option, which specifies the ``timeoutMS`` value for the
 following operations executed on the session:
