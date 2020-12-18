@@ -62,7 +62,7 @@ negative value is specified. This value MUST be configurable at the level of
 a MongoClient, MongoDatabase, MongoCollection, or of a single operation.
 However, if the option is specified at any level, it cannot be later changed
 to unset. At each level, the value MUST be inherited from the previous level
-if it is not explicitly specified. Additonally, some entities like
+if it is not explicitly specified. Additionally, some entities like
 ``ClientSession`` and ``GridFSBucket`` either inherit ``timeoutMS`` from
 their parent entities or provide options to override it. The behavior for
 these entities is described in individual sections of this specification.
