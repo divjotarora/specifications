@@ -344,17 +344,23 @@ See `Why don’t drivers use backoff/jitter between retry attempts?`_.
 Client Side Encryption
 ~~~~~~~~~~~~~~~~~~~~~~
 
-If client-side encryption is enabled, the remaining ``timeoutMS`` value MUST
-be used as the ``timeoutMS`` when executing ``listCollections`` commands to
-retrieve collection schemas, ``find`` commands to get data from the key
-vault, and any commands against mongocryptd. It MUST also be used as the
-request timeout for HTTP requests against KMS servers to decrypt data keys.
-When sending a command to mongocryptd, drivers MUST NOT append a
-``maxTimeMS`` field. This is to ensure that a ``maxTimeMS`` field can be
-safely appended to the command after it has been marked by mongocryptd and
-encrypted by libmongocrypt. To determine whether or not the server is a
-mongocryptd, drivers MUST check that the ``iscryptd`` field in the server's
-description is ``true``.
+If automatic client-side encryption or decryption is enabled, the remaining
+``timeoutMS`` value MUST be used as the ``timeoutMS`` when executing
+``listCollections`` commands to retrieve collection schemas, ``find``
+commands to get data from the key vault, and any commands against
+mongocryptd. It MUST also be used as the request timeout for HTTP requests
+against KMS servers to decrypt data keys. When sending a command to
+mongocryptd, drivers MUST NOT append a ``maxTimeMS`` field. This is to ensure
+that a ``maxTimeMS`` field can be safely appended to the command after it has
+been marked by mongocryptd and encrypted by libmongocrypt. To determine
+whether or not the server is a mongocryptd, drivers MUST check that the
+``iscryptd`` field in the server's description is ``true``.
+
+For explicit encryption and decryption, the ``ClientEncryptionOpts`` options
+type used to construct `ClientEncryption
+<../client-side-encryption/client-side-encryption.rst#clientencryption>`_
+instances MUST support a new ``timeoutMS`` option, which specifies the timeout
+for all operations executed on the ``ClientEncryption`` object.
 
 See `maxTimeMS is not added for mongocryptd`_.
 
