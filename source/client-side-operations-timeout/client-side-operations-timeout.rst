@@ -62,7 +62,10 @@ negative value is specified. This value MUST be configurable at the level of
 a MongoClient, MongoDatabase, MongoCollection, or of a single operation.
 However, if the option is specified at any level, it cannot be later changed
 to unset. At each level, the value MUST be inherited from the previous level
-if it is not explicitly specified.
+if it is not explicitly specified. Additonally, some entities like
+``ClientSession`` and ``GridFSBucket`` either inherit ``timeoutMS`` from
+their parent entities or provide options to override it. The behavior for
+these entities is described in individual sections of this specification.
 
 See `timeoutMS cannot be changed to unset once it’s specified`_.
 
@@ -488,8 +491,19 @@ See `Change stream behavior`_.
 Sessions
 --------
 
-Explicit `ClientSession <../sessions/driver-sessions.rst#clientsession>`_ MUST
-inherit ``timeoutMS`` from their parent MongoClient.
+The `SessionOptions <../sessions/driver-sessions.rst#mongoclient-changes>`_
+used to construct explicit explicit `ClientSession
+<../sessions/driver-sessions.rst#clientsession>`_ instances MUST accept a new
+``defaultTimeoutMS`` option, which specifies the ``timeoutMS`` value for the
+following operations executed on the session:
+
+#. commitTransaction
+#. abortTransaction
+#. withTransaction
+#. endSession
+
+If this option is not specified for a ``ClientSession``, it MUST inherit the
+``timeoutMS`` of its parent MongoClient.
 
 Convenient Transactions API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
