@@ -176,27 +176,6 @@ This section is an overview of the public API for transactions:
         // Options defined in other specifications...
     }
 
-    class CommitTransactionOptions {
-        /**
-         * The timeoutMS value for the commitTransaction operation.
-         */
-        Optional<int64> timeoutMS;
-    }
-
-    class AbortTransactionOptions {
-        /**
-         * The timeoutMS value for the commitTransaction operation.
-         */
-        Optional<int64> timeoutMS;
-    }
-
-    class EndSessionOptions {
-        /**
-         * The timeoutMS value for the commitTransaction operation.
-         */
-        Optional<int64> timeoutMS;
-    }
-
     interface ClientSession {
         /**
          * Starts a new transaction with the given options. This session's
@@ -214,19 +193,19 @@ This section is an overview of the public API for transactions:
          * Commits the currently active transaction in this session.
          * Raises an error if this session has no transaction.
          */
-        void commitTransaction(Optional<CommitTransactionOptions> options);
+        void commitTransaction();
 
         /**
          * Aborts the currently active transaction in this session.
          * Raises an error if this session has no transaction.
          */
-        void abortTransaction(Optional<AbortTransactionOptions> options);
+        void abortTransaction();
 
         /**
          * Aborts any currently active transaction and ends this session.
          * MUST NOT raise an error.
          */
-        void endSession(Optional<EndSessionOptions> options);
+        void endSession();
 
         // Methods defined in other specifications...
     }
@@ -347,54 +326,6 @@ defaultTransactionOptions
 
 The default TransactionOptions to use for transactions started on this
 session.
-
-**CommitTransactionOptions**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This type MUST be implemented such that future options can be added without
-breaking backward compatibility.
-
-timeoutMS
-^^^^^^^^^
-
-This is the timeout to apply to the ``commitTransaction`` operation. Drivers
-MUST only support this option once they have implemented the `Client Side
-Operations Timeout specification
-<../client-side-operations-timeout/client-side-operations-timeout.rst>`_.
-Note that this property is optional and the default is unset and it MUST be
-applied according to the rules outlined in that specification.
-
-**AbortTransactionOptions**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This type MUST be implemented such that future options can be added without
-breaking backward compatibility.
-
-timeoutMS
-^^^^^^^^^
-
-This is the timeout to apply to the ``abortTransaction`` operation. Drivers
-MUST only support this option once they have implemented the `Client Side
-Operations Timeout specification
-<../client-side-operations-timeout/client-side-operations-timeout.rst>`_.
-Note that this property is optional and the default is unset and it MUST be
-applied according to the rules outlined in that specification.
-
-**EndSessionOptions**
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This type MUST be implemented such that future options can be added without
-breaking backward compatibility.
-
-timeoutMS
-^^^^^^^^^
-
-This is the timeout to apply to the ``endSession`` operation. Drivers MUST
-only support this option once they have implemented the `Client Side
-Operations Timeout specification
-<../client-side-operations-timeout/client-side-operations-timeout.rst>`_.
-Note that this property is optional and the default is unset and it MUST be
-applied according to the rules outlined in that specification.
 
 **ClientSession changes**
 ~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -526,24 +526,6 @@ algorithm
 The string "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" or
 "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
 
-DecryptOpts
------------
-
-.. code:: typescript
-
-   class DecryptOpts {
-      timeoutMS: Optional<int64>
-   }
-
-timeoutMS
-^^^^^^^^^
-This is the timeout to apply to the ``decrypt`` operation. Drivers MUST only
-support this option once they have implemented the `Client Side Operations
-Timeout specification
-<../client-side-operations-timeout/client-side-operations-timeout.rst>`_.
-Note that this property is optional and the default is unset and it MUST be
-applied according to the rules outlined in that specification.
-
 User facing API: When Auto Encryption Fails
 ===========================================
 

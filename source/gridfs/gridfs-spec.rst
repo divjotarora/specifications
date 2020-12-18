@@ -638,15 +638,6 @@ File Download
 
 .. code:: javascript
 
-  class GridFSDownloadOptions {
-
-    /**
-     * The timeoutMS value for the download operation.
-     */
-    Optional<int64> timeoutMS;
-
-  }
-
   class GridFSBucket {
 
     /** Opens a Stream from which the application can read the contents of the stored file
@@ -654,13 +645,13 @@ File Download
      *
      * Returns a Stream.
      */
-    Stream open_download_stream(TFileId id, GridFSDownloadOptions options=null);
+    Stream open_download_stream(TFileId id);
 
     /**
      * Downloads the contents of the stored file specified by @id and writes
      * the contents to the @destination Stream.
      */
-    void download_to_stream(TFileId id, Stream destination, GridFSDownloadOptions options=null);
+    void download_to_stream(TFileId id, Stream destination);
 
   }
 
@@ -712,22 +703,13 @@ File Deletion
 
 .. code:: javascript
 
-  class GridFSDeleteOptions {
-
-    /**
-     * The timeoutMS value for the delete operation.
-     */
-    Optional<int64> timeoutMS;
-
-  }
-
   class GridFSBucket {
 
     /**
      * Given a @id, delete this stored file’s files collection document and
      * associated chunks from a GridFS bucket.
      */
-    void delete(TFileId id, GridFSDeleteOptions options=null);
+    void delete(TFileId id);
 
   }
 
@@ -938,21 +920,12 @@ Renaming stored files
 
 .. code:: javascript
 
-  class GridFSRenameOptions {
-
-    /**
-     * The timeoutMS value for the rename operation.
-     */
-    Optional<int64> timeoutMS;
-
-  }
-
   class GridFSBucket {
 
     /**
      * Renames the stored file with the specified @id.
      */
-    void rename(TFileId id, string new_filename, GridFSRenameOptions options=null);
+    void rename(TFileId id, string new_filename);
 
   }
 
@@ -976,22 +949,13 @@ Dropping an entire GridFS bucket
 
 .. code:: javascript
 
-  class GridFSDropOptions {
-
-    /**
-     * The timeoutMS value for the drop operation.
-     */
-    Optional<int64> timeoutMS;
-
-  }
-
   class GridFSBucket {
 
     /**
      * Drops the files and chunks collections associated with
      * this bucket.
      */
-    void drop(GridFSDropOptions options=null);
+    void drop();
 
   }
 
