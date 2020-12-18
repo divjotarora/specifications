@@ -132,6 +132,7 @@ specifications:
 - `GridFS <../gridfs/gridfs-spec.rst>`__
 - `Index Management <../index-management.rst>`__
 - `Transactions <../transactions/transactions.rst>`__
+- `Convenient API for Transactions <../transactions-convenient-api/transactions-convenient-api.rst>`__
 
 In addition, it applies to all operations on cursor objects that may perform
 blocking work (e.g. methods to iterate or close a cursor, any method that
