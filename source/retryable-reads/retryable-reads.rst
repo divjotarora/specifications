@@ -662,7 +662,7 @@ infinite loop scenario, socket timeouts are only considered retryable once.
 Changelog 
 ==========
 
-2020-12-01: Change the retry policy to link to the client-side operations timeout specification
+2020-12-01: Change the retry policy to retry indefinitely and special case socket timeouts
 
 2019-06-07: Mention $merge stage for aggregate alongside $out
 

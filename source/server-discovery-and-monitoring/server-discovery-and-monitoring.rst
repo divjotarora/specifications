@@ -2357,7 +2357,7 @@ stale application errors.
 
 2020-06-08: Clarify reasoning behind how SDAM determines if a topologyVersion is stale.
 
-2020-12-01: Require that drivers track iscryptd field from isMaster responses.
+2020-12-01: Add iscryptd and 90th percentile RTT fields to ServerDescription.
 
 .. Section for links.
 

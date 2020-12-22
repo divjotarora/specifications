@@ -586,9 +586,17 @@ execution including, but not limited to, ``serverSelectionTimeoutMS``,
 As a result, users are often unsure which timeout to use. Because some of
 these timeouts are additive, it is difficult to set a combination which
 ensures control will be returned to the user after a specified amount of
-time. As a result, changes are required to the drivers API to deprecate some
-of the existing timeouts and add a new one to specify the maximum execution
-time for an entire operation from start to finish.
+time. To make timeouts more intuitive, changes are required to the drivers
+API to deprecate some of the existing timeouts and add a new one to specify
+the maximum execution time for an entire operation from start to finish.
+
+In addition, automatically retrying reads and writes that failed due to
+transient network blips or planned maintenance scenarios has improved
+application resiliency but the original behavior of only retrying once still
+allowed some errors to be propagated to applications. Supporting a timeout
+for an entire operation allows drivers to retry operations multiple times
+while still guaranteeing that an application can get back control once the
+specified amount of time has elapsed.
 
 Design Rationale
 ================
@@ -670,7 +678,7 @@ requirements and returns the marked up result. If the command sent to
 mongocryptd contained ``maxTimeMS``, the final command sent to MongoDB would
 contain two ``maxTimeMS`` fields: one added by the regular MongoClient and
 another added by the mongocryptd client. To avoid this complication, drivers
-to not add this field when sending commands to mongocryptd at all. Doing so
+do not add this field when sending commands to mongocryptd at all. Doing so
 does not sacrifice any functionality because mongocryptd always runs on
 localhost and does not perform any blocking work, so execution or network
 timeouts cannot occur.
