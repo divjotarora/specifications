@@ -294,13 +294,23 @@ Command Execution
 ~~~~~~~~~~~~~~~~~
 
 If ``timeoutMS`` is set, drivers MUST append a ``maxTimeMS`` field to
-commands executed against a MongoDB server. If the 90th percentile RTT of the
-selected server is less than the remaining timeoutMS, the value of this field
-MUST be ``remaining timeoutMS - 90th percentile RTT``. If not, drivers MUST
-return a timeout error without attempting to send the message to the server.
-This is done to ensure that an operation is not routed to the server if it
-will likely fail with a socket timeout as that could cause connection churn.
-The ``maxTimeMS`` field MUST be appended after all blocking work is complete.
+commands executed against a MongoDB server using the 90th percentile RTT of
+the selected server. Note that this value MUST be retrieved from the same
+`TopologyDescription
+<../server-discovery-and-monitoring/server-discovery-and-monitoring.rst#TopologyDescription>`__
+that was used for server selection before the selected server's description
+can be modified. Otherwise, drivers may be subject to a race condition where
+a server is reset to the default description (e.g. due to an error in the
+monitoring thread) after it has been selected but before the RTT is
+retrieved.
+
+If the 90th percentile RTT of the selected server is less than the remaining
+timeoutMS, the value of this field MUST be ``remaining timeoutMS - 90th
+percentile RTT``. If not, drivers MUST return a timeout error without
+attempting to send the message to the server. This is done to ensure that an
+operation is not routed to the server if it will likely fail with a socket
+timeout as that could cause connection churn. The ``maxTimeMS`` field MUST be
+appended after all blocking work is complete.
 
 After wire message construction, drivers MUST check for timeout before
 writing the message to the server. If the timeout has expired or the amount
