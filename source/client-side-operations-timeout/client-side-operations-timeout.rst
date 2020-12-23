@@ -379,14 +379,13 @@ Background Connection Pooling
 
 Connections created as part of a connection pool’s ``minPoolSize``
 maintenance routine MUST use ``connectTimeoutMS`` as the timeout for
-connection establishment. After the connection is established,
-``connectTimeoutMS`` MUST be used as the ``timeoutMS`` value for all commands
-sent as part of the MongoDB or authentication handshakes. The timeout MUST be
+connection establishment. After the connection is established, if
+``timeoutMS`` is set, it MUST be used as the timeout for all commands sent as
+part of the MongoDB or authentication handshakes. The timeout MUST be
 refreshed after each command. These commands MUST set timeouts per the
-`Command Execution`_ section.
-
-See `Background connections use connectTimeoutMS as the timeout for
-handshake commands`_.
+`Command Execution`_ section. If ``timeoutMS`` is not set, drivers MUST
+continue to honor ``socketTimeoutMS`` as the socket timeout for handshake and
+authentication commands.
 
 Server Monitoring
 -----------------
@@ -669,16 +668,6 @@ if an application set ``timeoutMS`` for a specific operation and the
 MongoClient used in production was configured with a deprecated timeout
 option. To have clear semantics and avoid unexpected errors in applications, we
 decided that ``timeoutMS`` should override deprecated timeout options.
-
-Background connections use connectTimeoutMS as the timeout for handshake commands
----------------------------------------------------------------------------------
-
-Because applications might set large ``timeoutMS`` values if the application
-primarily does long-running analytical queries, connection handshakes could
-take a long time if handshake commands were governed by ``timeoutMS``.
-Connection establishment and handshaking should be quick so it makes more
-sense to use ``connectTimeoutMS`` as the ``timeoutMS`` value for handshake
-commands.
 
 maxTimeMS is not added for mongocryptd
 --------------------------------------
