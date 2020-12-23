@@ -440,11 +440,13 @@ retrieved batch, the ``next`` method MUST return them even if the timeout has
 expired and MUST only return a timeout error if a ``getMore`` is required.
 
 If ``timeoutMode`` is set to ``ITERATION``, drivers MUST honor the
-``timeoutMS`` option for the initial operation but MUST NOT append a
-``maxTimeMS`` field to the command sent to the server. The original
-``timeoutMS`` value MUST also be applied to each ``next`` call on the created
-cursor. Drivers MUST NOT append a ``maxTimeMS`` field to ``getMore``
-commands.
+``timeoutMS`` option for the initial operation. If the operation is not an
+``aggregate`` with a ``$out`` or ``$merge`` pipeline stage, drivers MUST NOT
+append a ``maxTimeMS`` field to the command sent to the server. If it is,
+``timeoutMS`` MUST be used to derive a ``maxTimeMS`` field. After the
+operation has executed, the original ``timeoutMS`` value MUST also be applied
+to each ``next`` call on the created cursor. Drivers MUST NOT append a
+``maxTimeMS`` field to ``getMore`` commands.
 
 See `Non-tailable cursor behavior`_.
 
