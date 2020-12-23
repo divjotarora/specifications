@@ -380,12 +380,12 @@ Background Connection Pooling
 Connections created as part of a connection pool’s ``minPoolSize``
 maintenance routine MUST use ``connectTimeoutMS`` as the timeout for
 connection establishment. After the connection is established, if
-``timeoutMS`` is set, it MUST be used as the timeout for all commands sent as
-part of the MongoDB or authentication handshakes. The timeout MUST be
-refreshed after each command. These commands MUST set timeouts per the
-`Command Execution`_ section. If ``timeoutMS`` is not set, drivers MUST
-continue to honor ``socketTimeoutMS`` as the socket timeout for handshake and
-authentication commands.
+``timeoutMS`` is set at the MongoClient level, it MUST be used as the timeout
+for all commands sent as part of the MongoDB or authentication handshakes.
+The timeout MUST be refreshed after each command. These commands MUST set
+timeouts per the `Command Execution`_ section. If ``timeoutMS`` is not set,
+drivers MUST continue to honor ``socketTimeoutMS`` as the socket timeout for
+handshake and authentication commands.
 
 Server Monitoring
 -----------------
