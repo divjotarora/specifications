@@ -502,7 +502,7 @@ Consider the following pseudo-code:
        * The caller can then infer that an attempt was made and failed. This case
        * is very rare, and likely means that the cluster is in the midst of a
        * downgrade. */
-      if ( ! isRetryableWritesSupported()) {
+      if ( ! isRetryableWritesSupported(server)) {
         throw previousError;
       }
     }

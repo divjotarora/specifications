@@ -148,7 +148,8 @@ the timeout for an operation can also be expressed via an explicit
 ClientSession (see `Convenient Transactions API`_). In this case, the timeout
 on the session MUST be used as the ``timeoutMS`` value for the operation.
 Drivers MUST raise a validation error if an explicit session with a timeout
-is used and the ``timeoutMS`` option is set at the operation level.
+is used and the ``timeoutMS`` option is set at the operation level for
+operations executed as part of a ``withTransaction`` callback.
 
 See `timeoutMS overrides deprecated timeout options`_.
 
@@ -295,12 +296,12 @@ Command Execution
 
 If ``timeoutMS`` is set, drivers MUST append a ``maxTimeMS`` field to
 commands executed against a MongoDB server using the 90th percentile RTT of
-the selected server. Note that this value MUST be retrieved from the same
-`TopologyDescription
+the selected server. Note that this value MUST be retrieved during server
+selection using the ``servers`` field of the same `TopologyDescription
 <../server-discovery-and-monitoring/server-discovery-and-monitoring.rst#TopologyDescription>`__
-that was used for server selection before the selected server's description
-can be modified. Otherwise, drivers may be subject to a race condition where
-a server is reset to the default description (e.g. due to an error in the
+that was used for selection before the selected server's description can be
+modified. Otherwise, drivers may be subject to a race condition where a
+server is reset to the default description (e.g. due to an error in the
 monitoring thread) after it has been selected but before the RTT is
 retrieved.
 
@@ -486,12 +487,15 @@ Change Streams
 Driver ``watch`` helpers MUST support both ``timeoutMS`` and
 ``maxAwaitTimeMS`` options. Drivers MUST error if ``maxAwaitTimeMS`` is set,
 ``timeoutMS`` is set to a non-zero value, and ``maxAwaitTimeMS`` is greater
-than or equal to ``timeoutMS``. If set, drivers MUST apply the ``timeoutMS``
-option to the initial ``aggregate`` operation. Drivers MUST also apply the
-original ``timeoutMS`` value to each ``next`` call on the change stream but
-MUST NOT use it to derive a ``maxTimeMS`` field for ``getMore`` commands. If
-the ``maxAwaitTimeMS`` option is set, drivers MUST use it as the
-``maxTimeMS`` field on ``getMore`` commands.
+than or equal to ``timeoutMS``. These helpers MUST NOT support the
+``timeoutMode`` option as change streams are an abstraction around
+tailable-awaitData cursors, so they implicitly use ``ITERATION`` mode. If
+set, drivers MUST apply the ``timeoutMS`` option to the initial ``aggregate``
+operation. Drivers MUST also apply the original ``timeoutMS`` value to each
+``next`` call on the change stream but MUST NOT use it to derive a
+``maxTimeMS`` field for ``getMore`` commands. If the ``maxAwaitTimeMS``
+option is set, drivers MUST use it as the ``maxTimeMS`` field on ``getMore``
+commands.
 
 If a ``next`` call fails with a timeout error, drivers MUST NOT invalidate
 the change stream. The subsequent ``next`` call MUST perform a resume attempt
@@ -536,11 +540,12 @@ modified by users if there is an idiomatic way to do so in the language (e.g.
 underscore-prefixed variable names in Python) and MUST document that
 modification of the field can cause unintended correctness issues for
 applications. Drivers MUST document that the remaining timeout will not be
-applied to callback operations that do not use the ClientSession and that
-overridding ``timeoutMS`` for operations inside the provided callback will
-result in a client-side error. If the callback returns an error and the
-transaction must be aborted, drivers MUST refresh the ``timeoutMS`` value for
-the ``abortTransaction`` operation.
+applied to callback operations that do not use the ClientSession. Drivers
+MUST also document that overridding ``timeoutMS`` for operations executed
+using the explict session inside the provided callback will result in a
+client-side error, as defined in `Validation and Overrides`_. If the callback
+returns an error and the transaction must be aborted, drivers MUST refresh
+the ``timeoutMS`` value for the ``abortTransaction`` operation.
 
 If ``timeoutMS`` is not set, drivers MUST continue to exhibit the existing
 120 second timeout behavior. Drivers MUST NOT change existing implementations
@@ -635,7 +640,7 @@ serverSelectionTimeoutMS is not deprecated
 
 The original goal of the project was to expose a single timeout and deprecate
 all others. This was not possible, however, because executing an operation
-consists of two distinct parts. The first is selecting a server and checkout
+consists of two distinct parts. The first is selecting a server and checking
 out a connection from its pool. This should have a default timeout because
 failure to do this indicates that the deployment is not in a healthy state or
 that there was a configuration error which prevents the driver from
