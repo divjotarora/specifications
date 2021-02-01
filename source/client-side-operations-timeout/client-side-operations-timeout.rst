@@ -420,9 +420,12 @@ doing so is possible in the language. If ``timeoutMS`` is explicitly
 overridden, it MUST be honored. Otherwise, if ``timeoutMS`` was applied to
 the operation that created the cursor, drivers MUST use ``min(timeoutMS,
 connectTimeoutMS)`` as the ``timeoutMS`` value for the ``killCursors``
-command if one is required. This applies to explicit ``close`` methods that
-can be called by users as well as implicit destructors that are automatically
-invoked when exiting resource blocks.
+command if one is required. Note that ``timeoutMS`` in the ``min()``
+calculation refers to the ``timeoutMS`` value that was applied to the
+original cursor-creating operation, not the remaining timeout associated with
+the cursor. The calculated timeout MUST apply to explicit ``close`` methods
+that can be called by users as well as implicit destructors that are
+automatically invoked when exiting resource blocks.
 
 See `Cursor close() methods use connectTimeoutMS as timeoutMS`_.
 
